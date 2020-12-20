@@ -1,4 +1,5 @@
-#decfunc
+## decfunc
+
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
 Creating decorators with arguments made easy.
