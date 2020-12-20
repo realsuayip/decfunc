@@ -1,6 +1,6 @@
 ## decfunc
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Creating decorators with arguments made easy.
 
