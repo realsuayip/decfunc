@@ -10,24 +10,21 @@ that makes argument-ed decorators work.
 
 ## Documentation
 
-This library only contains one class: `Wrapper`. The `mutate`
-method of this class is responsible for the business logic.
-You can convert this class to decorator using the class method
-`as_decorator`. Here is a simple example:
+This library only contains one class: `wrapper`. The `mutate`
+method of this class is responsible for your business logic.
+You can simply use a class inheriting from `wrapper` as the
+decorator.  For example:
 
 ````python
-from decfunc import Wrapper
+from decfunc import wrapper
 
 
-class SquareRoot(Wrapper):
-    def mutate(self, function, *args, **kwargs):
-        return function(*args, **kwargs) ** (1 / 2)
+class square_root(wrapper):
+    def mutate(self, wrapped, *args, **kwargs):
+        return wrapped(*args, **kwargs) ** (1 / 2)
 
 
-square = SquareRoot.as_decorator()
-
-
-@square
+@square_root
 def get_number(*args, **kwargs):
     return 4
 
@@ -37,7 +34,7 @@ get_number()  # 2.0
 
 In this example, decorated function's return value is mutated so
 that its square root is returned instead. As you can see
-`mutate` method takes a `function`, which is the decorated
+`mutate` method takes a `wrapped`, which is the decorated
 class or function, and `*args`, `**kwargs`, which correspond
 to given args and kwargs of the decorated function/class.
 
@@ -46,37 +43,34 @@ an argument named `n`, which will denote to nth root, instead
 of square root.
 
 ````python
-from decfunc import Wrapper
+from decfunc import wrapper
 
 
-class NthRoot(Wrapper):
+class nth_root(wrapper):
     n: int = 2
 
-    def mutate(self, function, *args, **kwargs):
-        return function(*args, **kwargs) ** (1 / self.n)
+    def mutate(self, wrapped, *args, **kwargs):
+        return wrapped(*args, **kwargs) ** (1 / self.n)
 
 
-root = NthRoot.as_decorator()
-
-
-@root(n=3)
+@nth_root(n=3)
 def get_number(*args, **kwargs):
     return 27
 
 
-@root
+@nth_root
 def get_another_number(*args, **kwargs):
     return 16
 
 
 get_number()  # 3.0
-get_another_number() # 4.0
+get_another_number()  # 4.0
 ````
 
 As you can see, in order to add arguments to the decorator
 you need to use annotation syntax. If you assign a value to
 the argument, it will be used as default argument;
-calling bare `@root` behaves just like `@square`.
+calling bare `@nth_root` behaves just like `@square_root`.
 Refrain from using mutable objects as default values.
 
 And that's about it! If you don't specify a default value,

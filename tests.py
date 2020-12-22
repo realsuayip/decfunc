@@ -1,95 +1,114 @@
 from unittest import TestCase
 
-from decfunc import Wrapper
+from decfunc import wrapper
+
+
+class chicken(wrapper):
+    def mutate(self, function, *args, **kwargs):
+        return "Chicken!"
+
+
+class mul(wrapper):
+    factor: int
+
+    def mutate(self, function, *args, **kwargs):
+        return function() * self.factor
+
+
+class gulp_mul(mul):
+    factor: int = 0
 
 
 class TestWrapper(TestCase):
-    def setUp(self):
-        class Chicken(Wrapper):
-            def mutate(self, function, *args, **kwargs):
-                return "Chicken!"
-
-        class Mul(Wrapper):
-            factor: int
-
-            def mutate(self, function, *args, **kwargs):
-                return function() * self.factor
-
-        class GulpMul(Mul):
-            factor: int = 0
-
-        self.chicken = Chicken.as_decorator()
-        self.mul = Mul.as_decorator()
-        self.gulp_mul = GulpMul.as_decorator()
-
     def test_not_implemented(self):
-        class MyWrapper(Wrapper):
+        class dec(wrapper):  # noqa
             pass
-
-        dec = MyWrapper.as_decorator()
 
         with self.assertRaisesRegex(
             NotImplementedError,
-            "Method 'mutate' needs to be implemented for this class.",
+            "Method 'mutate' needs to be implemented for this wrapper.",
         ):
             dec(lambda: 5)()
 
     def test_doc(self):
-        @self.chicken
+        @chicken
         def my_func():
             """My Docstring"""
             return
 
+        @mul(factor=5)
+        def other_func():
+            """Other docstring"""
+            return 5
+
+        @chicken
+        def another_func(*args, **kwargs):
+            """Another docstring"""
+            return 5
+
+        @mul(factor=6)
+        def some_oher_func(*args, **kwargs):
+            """Some other docstring"""
+            return 5
+
         self.assertEqual("My Docstring", my_func.__doc__)
+        self.assertEqual("Other docstring", other_func.__doc__)
+        self.assertEqual("Another docstring", another_func.__doc__)
+        self.assertEqual("Some other docstring", some_oher_func.__doc__)
+
+        my_func()
+        other_func()
+
+        self.assertEqual("My Docstring", my_func.__doc__)
+        self.assertEqual("Other docstring", other_func.__doc__)
+        self.assertEqual("Another docstring", another_func.__doc__)
+        self.assertEqual("Some other docstring", some_oher_func.__doc__)
 
     def test_basic(self):
-        @self.chicken
+        @chicken
         def hen():
             return "Hen!"
 
-        self.assertEqual("Chicken!", self.chicken(lambda: 5)())
+        self.assertEqual("Chicken!", chicken(lambda: 5)())
         self.assertEqual("Chicken!", hen())
 
     def test_use_function_value(self):
-        @self.mul(factor=5)
+        @mul(factor=5)
         def five():
             return 5
 
         self.assertEqual(25, five())
 
     def test_missing_keyword_argument(self):
-        @self.mul
-        def five():
-            return 5
-
         with self.assertRaisesRegex(
-            ValueError, "Missing required keyword argument: factor"
+            ValueError, "Missing required keyword argument for 'mul': factor"
         ):
-            five()
+
+            mul(lambda: 5)
 
     def test_default_keyword_argument_value(self):
-        @self.gulp_mul
+        @gulp_mul
         def five():
             return 5
 
         self.assertEqual(0, five())
 
-        @self.gulp_mul(factor=2)
+        @gulp_mul(factor=2)
         def seven():
             return 7
 
         self.assertEqual(14, seven())
 
     def test_argument_style(self):
-        @self.gulp_mul
+        @gulp_mul
         def four():
             return 4
 
-        @self.gulp_mul()
+        @gulp_mul()
         def three():
             return 3
 
-        @self.gulp_mul(factor=0)
+        @gulp_mul(factor=0)
         def eight():
             return 8
 
@@ -98,52 +117,49 @@ class TestWrapper(TestCase):
         self.assertEqual(0, eight())
 
     def test_unexpected_argument(self):
-        @self.gulp_mul(hello=5)
-        def five():
-            return 5
-
         with self.assertRaisesRegex(
-            ValueError, "Unexpected keyword argument: hello"
+            ValueError, "Unexpected keyword argument for 'gulp_mul': hello"
         ):
-            five()
+            gulp_mul(hello=5)(lambda: 5)
 
     def test_forbidden_field_name(self):
-        class ForbiddenOne(Wrapper):
+        class forbidden(wrapper):
             mutate: int  # forbidden
 
-        one = ForbiddenOne.as_decorator()
-
-        @one
         def func_one():
             return 1
 
         with self.assertRaisesRegex(
             ValueError, "Forbidden field name: 'mutate'"
         ):
-            func_one()
+            forbidden(func_one)
 
     def test_function_arguments(self):
         test_cls = self
 
-        class Tester(Wrapper):
+        class tester(wrapper):
             def mutate(self, function, *args, **kwargs):
                 test_cls.assertEqual(
                     [(1, 2), {"c": 5, "d": 3}], [args, kwargs]
                 )
                 return function(*args, **kwargs)
 
-        @Tester.as_decorator()
-        def my_func(a, b, c=5, d=3):
+        @tester
+        def my_func(a, b, c=10, d=3):
+            self.assertEqual(1, a)
+            self.assertEqual(2, b)
+            self.assertEqual(5, c)
+            self.assertEqual(3, d)
             return a + b + c + d
 
         self.assertEqual(11, my_func(1, 2, c=5, d=3))
 
     def test_class_decoration(self):
-        class ClassWrapper(Wrapper):
+        class cls_dec(wrapper):
             def mutate(self, function, *args, **kwargs):
                 return function(*args, **kwargs).x + 10
 
-        @ClassWrapper.as_decorator()
+        @cls_dec
         class Something:
             def __init__(self, x):
                 self.x = x

@@ -1,51 +1,55 @@
 import functools
 
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-__all__ = ["Wrapper"]
+__all__ = ("wrapper",)
 
 
-class Wrapper:
-    def __init__(self, function):
-        functools.update_wrapper(self, function)
-        self.__decfunc__ = function
+class wrapper:
+    __reserved_fields = ("mutate",)
 
-    def __call__(self, *args, **kwargs):
-        cls_kwargs = getattr(self, "__kwargs")
+    def __init__(self, func=None, **options):
+        self.options = getattr(func, "__decfunc_options__", None) or options
+        self.__set_fields()
+        self.__decfunc__ = func
+
+        if func is not None:
+            functools.update_wrapper(self, self.__decfunc__)
+
+    def __call__(self, *func_args, **func_kwargs):
+        if self.__decfunc__ is not None:
+            return self.mutate(self.__decfunc__, *func_args, **func_kwargs)
+
+        func = func_args[0]
+        func.__decfunc_options__ = self.options
+        return self.__class__(func)
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __set_fields(self):
         fields = getattr(self.__class__, "__annotations__", {})
-        reserved = ("mutate", "as_decorator")
 
-        for kwarg in cls_kwargs:
-            if kwarg not in fields:
-                raise ValueError("Unexpected keyword argument: %s" % kwarg)
+        for option in self.options:
+            if option not in fields:
+                raise ValueError(
+                    "Unexpected keyword argument for '%s': %s" % (self, option)
+                )
 
         for field in fields:
-            if field in reserved or field.startswith("__"):
+            if field in self.__reserved_fields or field.startswith("__"):
                 raise ValueError("Forbidden field name: '%s'" % field)
 
-            if (field not in cls_kwargs) and (not hasattr(self, field)):
+            if (field not in self.options) and (not hasattr(self, field)):
                 raise ValueError(
-                    "Missing required keyword argument: %s" % field
+                    "Missing required keyword argument for '%s': %s"
+                    % (self, field)
                 )
-            elif field in cls_kwargs:
-                setattr(self, field, cls_kwargs[field])
+            elif field in self.options:
+                setattr(self, field, self.options[field])
 
-        return self.mutate(self.__decfunc__, *args, **kwargs)
-
-    def mutate(self, function, *args, **kwargs):
+    def mutate(self, wrapped, *args, **kwargs):
         raise NotImplementedError(
-            "Method 'mutate' needs to be implemented for this class."
+            "Method 'mutate' needs to be implemented for this wrapper."
         )
-
-    @classmethod
-    def as_decorator(cls):
-        def outer(initial=None, **kwargs):
-            def decorator(func):
-                wrapped = cls(func)
-                setattr(wrapped, "__kwargs", kwargs)
-                return wrapped
-
-            return decorator(initial) if initial else decorator
-
-        return outer
