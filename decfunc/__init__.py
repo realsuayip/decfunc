@@ -1,7 +1,7 @@
 import functools
 
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = ("wrapper",)
 
@@ -10,11 +10,11 @@ class wrapper:
     __reserved_fields = ("mutate",)
 
     def __init__(self, func=None, **options):
-        self.options = getattr(func, "__decfunc_options__", None) or options
-        self.__set_fields()
+        self.options = options
         self.__decfunc__ = func
 
         if func is not None:
+            self.__set_fields()
             functools.update_wrapper(self, self.__decfunc__)
 
     def __call__(self, *func_args, **func_kwargs):
@@ -22,8 +22,7 @@ class wrapper:
             return self.mutate(self.__decfunc__, *func_args, **func_kwargs)
 
         func = func_args[0]
-        func.__decfunc_options__ = self.options
-        return self.__class__(func)
+        return self.__class__(func, **self.options)
 
     def __str__(self):
         return self.__class__.__name__
