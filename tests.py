@@ -9,14 +9,16 @@ class chicken(wrapper):
 
 
 class mul(wrapper):
-    factor: int
+    def __init__(self, factor):
+        self.factor = factor
 
     def mutate(self, function, *args, **kwargs):
-        return function() * self.factor
+        return function(*args, **kwargs) * self.factor
 
 
 class gulp_mul(mul):
-    factor: int = 0
+    def __init__(self, factor=0):
+        self.factor = factor
 
 
 class TestWrapper(TestCase):
@@ -81,9 +83,8 @@ class TestWrapper(TestCase):
 
     def test_missing_keyword_argument(self):
         with self.assertRaisesRegex(
-            ValueError, "Missing required keyword argument for 'mul': factor"
+            TypeError, "missing a required argument: 'factor'"
         ):
-
             mul(lambda: 5)
 
     def test_default_keyword_argument_value(self):
@@ -118,21 +119,9 @@ class TestWrapper(TestCase):
 
     def test_unexpected_argument(self):
         with self.assertRaisesRegex(
-            ValueError, "Unexpected keyword argument for 'gulp_mul': hello"
+            TypeError, "got an unexpected keyword argument 'hello'"
         ):
             gulp_mul(hello=5)(lambda: 5)
-
-    def test_forbidden_field_name(self):
-        class forbidden(wrapper):
-            mutate: int  # forbidden
-
-        def func_one():
-            return 1
-
-        with self.assertRaisesRegex(
-            ValueError, "Forbidden field name: 'mutate'"
-        ):
-            forbidden(func_one)
 
     def test_function_arguments(self):
         test_cls = self
@@ -165,3 +154,53 @@ class TestWrapper(TestCase):
                 self.x = x
 
         self.assertEqual(15, Something(5))
+
+    def test_decorated_signature(self):
+        @gulp_mul
+        def dummy(x, a=1, b=2):
+            return 5
+
+        try:
+            dummy(x=1, a=1, b=2)
+        except:  # noqa
+            self.fail()
+
+        with self.assertRaisesRegex(
+            TypeError, "missing a required argument: 'x'"
+        ):
+            dummy()
+
+    def test_wrapper_signature(self):
+        class deco_sig(wrapper):
+            def __init__(self, a, b=5):
+                self.a = a
+                self.b = b
+
+            def mutate(self, wrapped, *args, **kwargs):
+                return wrapped() + self.a + self.b
+
+        with self.assertRaisesRegex(
+            TypeError, "missing a required argument: 'a'"
+        ):
+
+            @deco_sig(b=7)
+            def test_func():
+                return 10
+
+    def test_class_method(self):
+        class method_deco(wrapper):
+            def __init__(self, factor):
+                self.factor = factor
+
+            def mutate(self, wrapped, *args, **kwargs):
+                return wrapped(*args, **kwargs) * self.factor
+
+        class Klass:
+            number = 11
+
+            @method_deco(7)
+            def method(self):
+                return self.number
+
+        a = Klass()
+        self.assertEqual(77, a.method())

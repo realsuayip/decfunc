@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="decfunc",
-    version="0.2.1",
+    version="1.0.0",
     author="Şuayip Üzülmez",
     author_email="suayip.541@gmail.com",
     description="Creating decorators with arguments made easy.",
