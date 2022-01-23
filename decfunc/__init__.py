@@ -21,7 +21,6 @@ class wrapper:  # noqa
             def inner(*func_args, **func_kwargs):
                 return self.mutate(f, *func_args, **func_kwargs)
 
-            inner.__signature__ = signature(f)
             return inner
 
         self.__wrapper__ = _wrapper
