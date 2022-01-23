@@ -10,7 +10,7 @@ class wrapper:  # noqa
     def __new__(cls, *args, **kwargs):
         func = None
 
-        if args and callable(args[0]):
+        if (len(args) == 1) and (not kwargs) and callable(args[0]):
             func = args[0]
             args = args[1:]
 

@@ -204,3 +204,27 @@ class TestWrapper(TestCase):
 
         a = Klass()
         self.assertEqual(77, a.method())
+
+    def test_allow_callable_with_many_params(self):
+        class multi(wrapper):
+            def __init__(self, c, factor=2):
+                self.callable = c
+                self.factor = factor
+
+            def mutate(self, wrapped, *args, **kwargs):
+                return wrapped(*args, **kwargs) * self.callable() * self.factor
+
+        @multi(lambda: 15, 10)
+        def test_func():
+            return 2
+
+        self.assertEqual(300, test_func())
+
+        # Callable as the only argument should fail
+        with self.assertRaisesRegex(
+            TypeError, "missing a required argument: 'c'"
+        ):
+
+            @multi(lambda: 15)
+            def best_func():
+                return 3
