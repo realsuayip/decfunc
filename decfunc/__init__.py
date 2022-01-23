@@ -16,10 +16,9 @@ class wrapper:  # noqa
 
         self = super().__new__(cls)
         signature(self.__init__).bind(*args, **kwargs)
+        self.__init__(*args, **kwargs)  # noqa
 
         def _wrapper(f):
-            self.__init__(*args, **kwargs)  # noqa
-
             @functools.wraps(f)
             def inner(*func_args, **func_kwargs):
                 signature(f).bind(*func_args, **func_kwargs)
