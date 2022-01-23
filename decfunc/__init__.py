@@ -18,10 +18,11 @@ class wrapper:  # noqa
         signature(self.__init__).bind(*args, **kwargs)
 
         def _wrapper(f):
+            self.__init__(*args, **kwargs)  # noqa
+
             @functools.wraps(f)
             def inner(*func_args, **func_kwargs):
                 signature(f).bind(*func_args, **func_kwargs)
-                self.__init__(*args, **kwargs)  # noqa
                 return self.mutate(f, *func_args, **func_kwargs)
 
             return inner
