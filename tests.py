@@ -83,7 +83,8 @@ class TestWrapper(TestCase):
 
     def test_missing_keyword_argument(self):
         with self.assertRaisesRegex(
-            TypeError, "missing a required argument: 'factor'"
+            TypeError,
+            r".*__init__\(\) missing 1 required positional argument: 'factor'",
         ):
             mul(lambda: 5)
 
@@ -182,7 +183,8 @@ class TestWrapper(TestCase):
                 return wrapped() + self.a + self.b
 
         with self.assertRaisesRegex(
-            TypeError, "missing a required argument: 'a'"
+            TypeError,
+            r".*__init__\(\) missing 1 required positional argument: 'a'",
         ):
 
             @deco_sig(b=7)
@@ -224,7 +226,8 @@ class TestWrapper(TestCase):
 
         # Callable as the only argument should fail
         with self.assertRaisesRegex(
-            TypeError, "missing a required argument: 'c'"
+            TypeError,
+            r".*__init__\(\) missing 1 required positional argument: 'c'",
         ):
 
             @multi(lambda: 15)

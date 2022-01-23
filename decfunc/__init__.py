@@ -15,7 +15,6 @@ class wrapper:  # noqa
             args = args[1:]
 
         self = super().__new__(cls)
-        signature(self.__init__).bind(*args, **kwargs)
 
         def _wrapper(f):
             @functools.wraps(f)
