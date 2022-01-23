@@ -165,8 +165,10 @@ class TestWrapper(TestCase):
         except:  # noqa
             self.fail()
 
+        # Notice: verbosity of the message increases in Python 3.10
         with self.assertRaisesRegex(
-            TypeError, "missing a required argument: 'x'"
+            TypeError,
+            r".*dummy\(\) missing 1 required positional argument: 'x'",
         ):
             dummy()
 
