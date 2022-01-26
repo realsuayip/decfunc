@@ -1,0 +1,10 @@
+[1.0.0] (2022.01.26)
+
+- Refactored internal implementation, which
+entail following changes (not exhaustive).
+- Breaking API changes on parameterized
+wrappers. Use __init__ do define your
+parameters instead of annotations. Check
+the documentation to see an example.
+- Signatures are now respected.
+- Small improvement on performance.
