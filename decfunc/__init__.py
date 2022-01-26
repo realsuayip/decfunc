@@ -21,12 +21,11 @@ class wrapper:  # noqa
 
             return inner
 
-        self.__wrapper__ = _wrapper
-
         if func is not None:
             self.__init__(*args, **kwargs)  # noqa
-            return self.__wrapper__(func)
+            return _wrapper(func)
 
+        self.__wrapper__ = _wrapper
         return self
 
     def __call__(self, *args):
